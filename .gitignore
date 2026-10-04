@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Blender zálohy a dočasné soubory
+*.blend1
+*.blend[2-9]
+*.blend[1-9][0-9]
+*.tmp
+
+# Výstup --save-asset
+TireBarrier.blend
+
+# Operační systém
+Thumbs.db
+Desktop.ini
+.DS_Store
