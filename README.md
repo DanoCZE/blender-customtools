@@ -2,6 +2,18 @@
 
 Vlastní nástroje pro Blender na stavbu tratí. Každý nástroj je Geometry Nodes modifikátor: jednou se spustí skript, potom se používá stejně jako TREES v TrackTools.
 
+## Knihovna
+
+`customtools.blend` v kořeni drží všechny skupiny, teď **Tire Barrier** a **Vegetation**, včetně pneumatiky, rostlin a zabalených textur. Katalog je `blender_assets.cats.txt`.
+
+Přegenerování:
+
+```text
+blender --python build_library.py
+```
+
+Ve **Edit → Preferences → File Paths → Asset Libraries** přidej kořenovou složku projektu. Modifikátor pak přetáhni z Asset Browseru.
+
 ## Tire Barrier
 
 `tyre/tire_barrier.py` rozloží stohy pneumatik podél křivky. Rozestup stohů řídí **Distance**, stranu od křivky **Offset**. Když je vybraný terén, stohy se na něj připnou paprskem shora.
@@ -47,12 +59,60 @@ Další bariéry už skript nepotřebují. Modifikátor přidej přes **Add Modi
 
 Nech **Realize Instances** zapnuté a použij **Object → Convert → Mesh**. Uloží se geometrie, kterou vidíš ve viewportu.
 
-### Asset library
+Skupina je v `customtools.blend`, viz Knihovna.
 
-Složku `tyre` můžeš uložit jako knihovnu assetů:
+## Vegetation
+
+`vegetation/vegetation.py` rozsází rostliny na mesh podle weight paintu. Váha 0 nic nezasadí, váha 1 sází plnou hustotou. Rozmístění není mřížka: hustota je jen průměrná mezera.
+
+Skript naimportuje `vegetation/grass.fbx`. Nízká tráva (`Grass main`) jde do **Trava**, vysoká (`Grass tall`) do **Vysoka**, kopřivy (`Brennesel`) do **Koprivy**. Textury bere přednostně ze `vegetation/textures` a zabalí je do scény. Novější `grass.fbx` rostliny nahradí. Plevel, pampelišky, sedmikrásky a jetel zatím vlastní mesh nemají.
+
+### Požadavky
+
+- Blender 4.0 nebo novější s Geometry Nodes
+- `vegetation/grass.fbx` a textury, na které odkazuje (nízká tráva, vysoká tráva, kopřivy)
+
+### Spuštění
+
+1. Otevři scénu v Blenderu.
+2. Vyber mesh terénu.
+3. Spusť skript ze Scripting workspace, nebo z příkazové řádky:
 
 ```text
-blender --python tyre/tire_barrier.py -- --save-asset
+blender soubor.blend --python vegetation/vegetation.py
 ```
 
-Vznikne `tyre/TireBarrier.blend`. Katalog je v `tyre/blender_assets.cats.txt`. Ve **Edit → Preferences → File Paths → Asset Libraries** přidej složku `tyre` a modifikátor pak přetahuj z Asset Browseru na křivku.
+Skript založí vertex groups **Trava**, **Vysoka**, **Koprivy**, **Plevel** a **Louka**, naimportuje rostliny z `grass.fbx` a na mesh přidá modifikátor **Vegetation**. Aktivní groupa je Trava, takže weight paint začne nízkou trávou.
+
+Další povrchy už skript nepotřebují. Modifikátor přidej přes **Add Modifier → Vegetation**, nebo ho z Asset Browseru přetáhni na mesh. Groupy **Trava**, **Vysoka**, **Koprivy**, **Plevel** a **Louka** se na meshi založí samy. Po aktualizaci skriptu stačí Blender jednou restartovat.
+
+### Vrstvy
+
+| Group | Co se sází |
+| --- | --- |
+| Trava | nízká tráva z `grass.fbx` |
+| Vysoka | vysoká tráva z `grass.fbx` |
+| Koprivy | kopřivy z `grass.fbx` |
+| Plevel | plevel, kolekce se přiřazuje ručně |
+| Louka | nízká tráva, pampelišky, sedmikrásky a jetel, každý vlastní hustotou |
+
+Kolekce **Trava** je společná pro group Trava i pro trávu v louce. Pampelišky, sedmikrásky a jetel mají vlastní kolekci v panelu Louka.
+
+### Parametry
+
+| Parametr | Výchozí | Význam |
+| --- | --- | --- |
+| Density | 80 / 3 / 4 / 8 | Nízká tráva, vysoká tráva, kopřivy a plevel, body na m² při váze 1. |
+| Louka Density | 60 / 1,5 / 2 / 3 | Tráva, pampelišky, sedmikrásky a jetel nad groupou Louka. |
+| Scale Min / Max | 0,8–1,2 | Náhodné jednotné měřítko. Louka má jeden rozsah pro všechny čtyři druhy. |
+| Seed | 0 | Posun náhody pro místo, mezeru, výšku, otočení i variantu. |
+| Height Variation | 0,2 | Náhodná výška navíc, zhruba ±20 % na ose Z. |
+| Tilt | 8° | Největší náhodný náklon do strany. Spin kolem normály je vždy 0–360°. |
+| Min Slope | 0 | Nejnižší složka Z normály. 0 limit vypne, malba platí i na strmém svahu. |
+| Realize Instances | vypnuto | Sloučí rostliny do jednoho meshe. |
+
+### Uložení do scény
+
+Zapni **Realize Instances** a použij **Object → Convert → Mesh**.
+
+Skupina je v `customtools.blend`, viz Knihovna.
